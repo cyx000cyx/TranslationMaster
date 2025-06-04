@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多语言音频翻译系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.created { background: #d1ecf1; color: #0c5460; }
+        .status.processing { background: #fff3cd; color: #856404; }
+        .status.completed { background: #d4edda; color: #155724; }
+        .status.failed { background: #f8d7da; color: #721c24; }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>多语言音频翻译系统 - 任务管理</h1>
+        
+        <!-- 系统状态 -->
+        <div class="section">
+            <h2>系统状态</h2>
+            <button onclick="checkSystemStatus()">检查系统状态</button>
+            <div id="systemStatus" class="result"></div>
+        </div>
+
+        <!-- 音频文件夹列表 -->
+        <div class="section">
+            <h2>可用音频文件夹</h2>
+            <button onclick="loadAudioFolders()">刷新文件夹列表</button>
+            <div id="audioFolders" class="result"></div>
+        </div>
+
+        <!-- 创建翻译任务 -->
+        <div class="section">
+            <h2>创建翻译任务</h2>
+            <div class="form-group">
+                <label for="audioDirectory">音频文件夹:</label>
+                <select id="audioDirectory">
+                    <option value="">请选择音频文件夹</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sourceLanguage">源语言:</label>
+                <select id="sourceLanguage">
+                    <option value="auto">自动检测</option>
+                    <option value="zh">中文</option>
+                    <option value="en">英语</option>
+                    <option value="ja">日语</option>
+                    <option value="ko">韩语</option>
+                    <option value="fr">法语</option>
+                    <option value="de">德语</option>
+                    <option value="es">西班牙语</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="targetLanguages">目标语言 (多选):</label>
+                <select id="targetLanguages" multiple>
+                    <option value="zh">中文</option>
+                    <option value="en">英语</option>
+                    <option value="ja">日语</option>
+                    <option value="ko">韩语</option>
+                    <option value="fr">法语</option>
+                    <option value="de">德语</option>
+                    <option value="es">西班牙语</option>
+                </select>
+            </div>
+            <button onclick="createTask()">创建任务</button>
+            <div id="createResult" class="result"></div>
+        </div>
+
+        <!-- 任务列表 -->
+        <div class="section">
+            <h2>任务列表</h2>
+            <button onclick="loadTasks()">刷新任务列表</button>
+            <div id="taskList" class="result"></div>
+        </div>
+
+        <!-- 任务统计 -->
+        <div class="section">
+            <h2>任务统计</h2>
+            <button onclick="loadStatistics()">获取统计信息</button>
+            <div id="statistics" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // 检查系统状态
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/task/statistics`);
+                const data = await response.json();
+                document.getElementById('systemStatus').innerHTML = 
+                    `<div class="success">系统状态: 正常</div>\n响应时间: ${new Date().toLocaleString()}\n` +
+                    JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = 
+                    `<div class="error">系统状态: 异常\n错误信息: ${error.message}</div>`;
+            }
+        }
+
+        // 加载音频文件夹
+        async function loadAudioFolders() {
+            try {
+                const response = await fetch(`${API_BASE}/task/folders`);
+                const data = await response.json();
+                
+                const foldersDiv = document.getElementById('audioFolders');
+                const selectElement = document.getElementById('audioDirectory');
+                
+                if (data.code === 200 && data.data) {
+                    // 更新显示
+                    foldersDiv.innerHTML = '<div class="success">加载成功</div>\n' + JSON.stringify(data.data, null, 2);
+                    
+                    // 更新下拉框
+                    selectElement.innerHTML = '<option value="">请选择音频文件夹</option>';
+                    data.data.forEach(folder => {
+                        const option = document.createElement('option');
+                        option.value = folder.folderName;
+                        option.textContent = `${folder.folderName} (${folder.mp3Count} 个MP3文件)`;
+                        selectElement.appendChild(option);
+                    });
+                } else {
+                    foldersDiv.innerHTML = `<div class="error">加载失败: ${data.message || '未知错误'}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('audioFolders').innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        // 创建任务
+        async function createTask() {
+            const audioDirectory = document.getElementById('audioDirectory').value;
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguages = Array.from(document.getElementById('targetLanguages').selectedOptions)
+                .map(option => option.value);
+
+            if (!audioDirectory) {
+                alert('请选择音频文件夹');
+                return;
+            }
+            if (targetLanguages.length === 0) {
+                alert('请选择至少一个目标语言');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/task/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        audioDirectory: audioDirectory,
+                        sourceLanguage: sourceLanguage,
+                        targetLanguages: targetLanguages
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    document.getElementById('createResult').innerHTML = '<div class="success">任务创建成功</div>\n' + JSON.stringify(data, null, 2);
+                    // 任务创建成功，刷新任务列表
+                    setTimeout(loadTasks, 1000);
+                } else {
+                    document.getElementById('createResult').innerHTML = '<div class="error">任务创建失败</div>\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                document.getElementById('createResult').innerHTML = `<div class="error">创建失败: ${error.message}</div>`;
+            }
+        }
+
+        // 加载任务列表
+        async function loadTasks() {
+            try {
+                const response = await fetch(`${API_BASE}/task/list?current=1&size=10`);
+                const data = await response.json();
+                
+                if (data.code === 200 && data.data) {
+                    const tasks = data.data.records || [];
+                    let html = `<div class="success">加载成功</div>\n总任务数: ${data.data.total}\n\n`;
+                    
+                    if (tasks.length === 0) {
+                        html += '暂无任务记录';
+                    } else {
+                        tasks.forEach(task => {
+                            html += `任务ID: ${task.taskName}\n`;
+                            html += `音频路径: ${task.audioFilePath}\n`;
+                            html += `源语言: ${task.sourceLanguage}\n`;
+                            html += `目标语言: ${task.targetLanguage}\n`;
+                            html += `状态: ${task.status}\n`;
+                            html += `创建时间: ${new Date(task.createdAt).toLocaleString()}\n`;
+                            html += `更新时间: ${new Date(task.updatedAt).toLocaleString()}\n`;
+                            if (task.errorMessage) {
+                                html += `错误信息: ${task.errorMessage}\n`;
+                            }
+                            html += '\n---\n\n';
+                        });
+                    }
+                    
+                    document.getElementById('taskList').innerHTML = html;
+                } else {
+                    document.getElementById('taskList').innerHTML = `<div class="error">加载失败: ${data.message || '未知错误'}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('taskList').innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        // 加载统计信息
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE}/task/statistics`);
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    document.getElementById('statistics').innerHTML = '<div class="success">统计信息加载成功</div>\n' + JSON.stringify(data.data, null, 2);
+                } else {
+                    document.getElementById('statistics').innerHTML = '<div class="error">统计信息加载失败</div>\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                document.getElementById('statistics').innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        // 页面加载时自动检查系统状态
+        window.onload = function() {
+            checkSystemStatus();
+            loadAudioFolders();
+            loadTasks();
+        };
+    </script>
+</body>
+</html>

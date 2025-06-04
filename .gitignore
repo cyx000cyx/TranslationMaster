@@ -1,0 +1,56 @@
+# kdiff3 ignore
+*.orig
+
+# maven ignore
+target/
+
+#mybatis-generator ignore
+target/*
+
+# eclipse ignore
+.settings/
+.project
+.classpath
+
+# idea ignore
+.idea/
+*.ipr
+*.iml
+*.iws
+
+# temp ignore
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
+
+# system ignore
+.DS_Store
+Thumbs.db
+
+# package ignore (optional)
+# *.jar
+# *.war
+# *.zip
+# *.tar
+# *.tar.gz
+
+dependency.txt
+pom.xml.versionsBackup
+/.idea/
+target
+logs
+*.iml
+
+/src/generator/
+/Photos Library.photoslibrary/
+FunctionTest.java
+FunctionTest.java1
+/src/main/resources/generatorConfig.xml
+/.vscode
+
+# Ignore node_modules used to validate email templates
+/src/main/html/node_modules/
+
+./.run

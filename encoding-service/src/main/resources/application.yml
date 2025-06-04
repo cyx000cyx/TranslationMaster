@@ -1,0 +1,48 @@
+server:
+  port: 8004
+
+spring:
+  application:
+    name: encoding-service
+
+# 编码服务配置
+encoding:
+  # 压缩配置
+  compression:
+    algorithm: snappy
+    enable-optimization: true
+    buffer-size: 1024
+  
+  # 存储配置
+  storage:
+    type: memory  # 可选: memory, redis, database
+    max-entries: 10000
+    ttl-hours: 24
+  
+  # 查询配置
+  query:
+    enable-caching: true
+    cache-size: 1000
+    batch-size: 100
+  
+  # 性能配置
+  performance:
+    thread-pool-size: 10
+    enable-metrics: true
+
+# 日志配置
+logging:
+  level:
+    com.translation.encoding: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{50}] - %msg%n"
+
+# 管理端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

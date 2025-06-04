@@ -1,0 +1,73 @@
+server:
+  port: 8002
+
+spring:
+  application:
+    name: speech-service
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# Whisper配置
+whisper:
+  # Python解释器路径
+  python:
+    path: ${PYTHON_PATH:python}
+  
+  # Whisper脚本路径
+  script:
+    path: ${WHISPER_SCRIPT_PATH:./speech-service/scripts/whisper_processor.py}
+  
+  # 模型路径或模型名称（tiny, base, small, medium, large）
+  model:
+    path: ${WHISPER_MODEL:base}
+  
+  # 临时文件目录
+  temp:
+    dir: ${TEMP_DIR:./temp/speech}
+  
+  # 处理超时时间（秒）
+  timeout:
+    seconds: ${WHISPER_TIMEOUT:300}
+
+# 音频处理配置
+audio:
+  # 支持的最大文件大小（字节）
+  max-file-size: 104857600  # 100MB
+  
+  # 默认采样率
+  default-sample-rate: 16000
+  
+  # 是否启用预处理
+  enable-preprocessing: true
+  
+  # FFmpeg路径
+  ffmpeg:
+    path: ${FFMPEG_PATH:ffmpeg}
+
+# 消息队列配置
+message:
+  queue:
+    broker-url: vm://localhost
+    user: admin
+    password: admin
+
+# 日志配置
+logging:
+  level:
+    com.translation.speech: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{50}] - %msg%n"
+
+# 管理端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
